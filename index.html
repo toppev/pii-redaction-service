@@ -1,0 +1,293 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>PII Redaction AI</title>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/tailwindcss/2.2.19/tailwind.min.css" rel="stylesheet">
+    <style>
+        body {
+            background-color: #0F172A;
+            color: #E2E8F0;
+        }
+
+        .gradient-text {
+            background: linear-gradient(45deg, #60A5FA, #818CF8);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .loading-spinner {
+            width: 24px;
+            height: 24px;
+            border: 3px solid #60A5FA;
+            border-radius: 50%;
+            border-top-color: transparent;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            to {
+                transform: rotate(360deg);
+            }
+        }
+
+        .card {
+            background: rgba(30, 41, 59, 0.5);
+            backdrop-filter: blur(12px);
+            border: 1px solid rgba(148, 163, 184, 0.1);
+        }
+
+        .label-pill {
+            background: rgba(96, 165, 250, 0.1);
+            border: 1px solid rgba(96, 165, 250, 0.2);
+            color: #60A5FA;
+            padding: 0.25rem 0.75rem;
+            border-radius: 9999px;
+            font-size: 0.875rem;
+            display: inline-block;
+            margin: 0.25rem;
+        }
+
+        /* Dark theme for all text inputs */
+        textarea, input {
+            background-color: #1E293B !important;
+            color: #E2E8F0 !important;
+        }
+
+        /* Custom slider styling */
+        input[type="range"] {
+            -webkit-appearance: none;
+            width: 100%;
+            height: 6px;
+            background: #1E293B;
+            border-radius: 3px;
+            outline: none;
+        }
+
+        input[type="range"]::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            width: 18px;
+            height: 18px;
+            background: #60A5FA;
+            border-radius: 50%;
+            cursor: pointer;
+        }
+
+        input[type="range"]::-moz-range-thumb {
+            width: 18px;
+            height: 18px;
+            background: #60A5FA;
+            border-radius: 50%;
+            cursor: pointer;
+            border: none;
+        }
+    </style>
+    <script>
+        let isProcessing = false;
+
+        function getRedactLabels() {
+            const labelsInput = document.getElementById('redactLabelsInput').value;
+            return labelsInput.trim() ? labelsInput.split(',').map(label => label.trim()) : [];
+        }
+
+        function updateThresholdValue(value) {
+            document.getElementById('thresholdValue').textContent = value;
+        }
+
+        async function redactText() {
+            if (isProcessing) return;
+
+            const inputText = document.getElementById('inputText');
+            const outputText = document.getElementById('outputText');
+            const entitiesList = document.getElementById('entitiesList');
+            const loadingEl = document.getElementById('loading');
+            const errorEl = document.getElementById('error');
+            const submitBtn = document.getElementById('submitBtn');
+            const redactLabelsDiv = document.getElementById('redactLabels');
+            const threshold = document.getElementById('thresholdSlider').value;
+
+            if (!inputText.value.trim()) {
+                errorEl.classList.remove('hidden');
+                errorEl.innerText = 'Please enter some text to redact.';
+                return;
+            }
+
+            errorEl.classList.add('hidden');
+            outputText.innerText = '';
+            entitiesList.innerHTML = '';
+            redactLabelsDiv.innerHTML = '';
+
+            loadingEl.classList.remove('hidden');
+            submitBtn.disabled = true;
+            isProcessing = true;
+
+            try {
+                const response = await fetch('/redact', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        text: inputText.value,
+                        labels: getRedactLabels(),
+                        thresholds: {
+                            default: parseFloat(threshold)
+                        }
+                    }),
+                });
+
+                if (!response.ok) {
+                    throw new Error('API request failed');
+                }
+
+                const data = await response.json();
+
+                outputText.innerText = data.redactedText;
+
+                const entities = data.entities.map(e => `
+                    <li class="mb-2 p-2 bg-slate-800 rounded">
+                        <span class="text-blue-400">${e.label}:</span>
+                        <span class="text-slate-300">${e.text}</span>
+                        <span title="Confidence Score" class="text-xs text-slate-400">(${(e.score * 100).toFixed(1)}%)</span>
+                    </li>
+                `).join('');
+                entitiesList.innerHTML = entities;
+
+                if (data.labels) {
+                    const labelsList = data.labels.map(label =>
+                        `<span class="label-pill">${label}</span>`
+                    ).join('');
+                    redactLabelsDiv.innerHTML = labelsList;
+                }
+
+            } catch (error) {
+                errorEl.classList.remove('hidden');
+                errorEl.innerText = 'An error occurred while processing your request. Please try again.';
+                console.error(error);
+            } finally {
+                loadingEl.classList.add('hidden');
+                submitBtn.disabled = false;
+                isProcessing = false;
+            }
+        }
+
+        function setExampleText() {
+            document.getElementById('inputText').value = document.getElementById('exampleText').innerText.trim();
+        }
+    </script>
+</head>
+<body class="min-h-screen p-8">
+<div class="max-w-4xl mx-auto">
+    <header class="mb-8">
+        <h1 class="text-4xl font-bold mb-2 gradient-text">PII Redaction AI</h1>
+        <p class="text-slate-400">Identify and redact personal information from your text</p>
+        <p class="text-xs text-slate-500 mt-2">
+            This UI is created for demo/testing purposes only.
+        </p>
+        <div class="mt-2 text-sm text-slate-500">
+            View on GitHub:
+            <a href="https://github.com/toppev/pii-redaction-service"
+               target="_blank"
+               rel="noopener noreferrer"
+               class="text-blue-400 hover:text-blue-300 underline">
+                toppev/pii-redaction-service
+            </a>
+        </div>
+    </header>
+
+    <div class="card p-6 rounded-lg mb-8">
+        <div class="mb-6">
+            <div class="bg-slate-800 p-2">
+                <div class="text-sm font-medium text-slate-400 mb-2">
+                    Need an example?
+                </div>
+                <p id="exampleText" class="p-2">
+                    Maria Esimerkki booked a flight (Flight Number: EK202) on June 15, 2023, using her Visa card (Card Number: 4532-7891-2345-6789, Expiration:
+                    04/25, CVV: 123). Her passport number is P01234567, and her address is 123 Avenida Central, Madrid, Spain, 28014.
+
+                    She registered for health insurance from SaludPlus (Número de Póliza: HISP-0987-6543) for her condition, diabetes mellitus. Su Número de
+                    Seguridad Social es 123-45-6789, y su correo electrónico es maria.esimerkki@example.com.
+
+                    Her Brazilian colleague João da Silava provided his CNPJ: 12.345.678/0001-95 and phone number: +55 11 2345-6789 for a business transaction.
+                </p>
+                <button onclick="setExampleText()" class="mt-2 text-blue-400 hover:text-blue-300">Use this example</button>
+            </div>
+            <textarea
+                    id="inputText"
+                    rows="6"
+                    class="w-full p-4 rounded border border-slate-700 focus:border-blue-500 focus:ring-1 focus:ring-blue-500 outline-none"
+                    placeholder="Enter text to redact..."
+            ></textarea>
+        </div>
+
+        <div class="mb-6">
+            <label class="block text-sm font-medium text-slate-300 mb-2">
+                Entities to Redact (optional, comma-separated):
+                <div class="text-xs text-slate-400 mt-1">
+                    Leave empty to use default entities. Example: person, organization, email
+                </div>
+            </label>
+            <input
+                    type="text"
+                    id="redactLabelsInput"
+                    class="w-full p-2 rounded border border-slate-700 focus:border-blue-500 focus:ring-1 focus:ring-blue-500 outline-none"
+                    placeholder="e.g., person, organization, email"
+            />
+        </div>
+
+        <div class="mb-6">
+            <label class="block text-sm font-medium text-slate-300 mb-2">
+                Confidence Threshold: <span id="thresholdValue">0.5</span>
+                <div class="text-xs text-slate-400 mt-1">
+                    Higher values mean stricter entity detection (0-1)
+                </div>
+            </label>
+            <input
+                    type="range"
+                    id="thresholdSlider"
+                    min="0"
+                    max="1"
+                    step="0.01"
+                    value="0.5"
+                    oninput="updateThresholdValue(this.value)"
+                    class="w-full"
+            />
+        </div>
+
+        <div class="flex items-center gap-4">
+            <button
+                    id="submitBtn"
+                    onclick="redactText()"
+                    class="px-6 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+                Redact PII
+            </button>
+            <div id="loading" class="hidden">
+                <div class="loading-spinner"></div>
+            </div>
+            <div id="error" class="hidden text-red-400"></div>
+        </div>
+    </div>
+
+    <div class="card p-6 rounded-lg">
+        <h2 class="text-xl font-semibold mb-4 text-slate-300">Results</h2>
+
+        <div class="mb-6">
+            <h3 class="text-sm font-medium text-slate-400 mb-2">Redacted Text:</h3>
+            <div id="outputText" class="bg-slate-800 p-4 rounded min-h-[100px] whitespace-pre-wrap text-slate-300"></div>
+        </div>
+
+        <div class="mb-6">
+            <h3 class="text-sm font-medium text-slate-400 mb-2">
+                Entities considered for redaction:
+            </h3>
+            <div id="redactLabels" class="min-h-[40px]"></div>
+        </div>
+
+        <div>
+            <h3 class="text-sm font-medium text-slate-400 mb-2">Detected Entities:</h3>
+            <ul id="entitiesList" class="space-y-2"></ul>
+        </div>
+    </div>
+</div>
+</body>
+</html>

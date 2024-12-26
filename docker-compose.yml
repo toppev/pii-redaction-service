@@ -1,0 +1,7 @@
+services:
+  pii-removal-service:
+    restart: unless-stopped
+    container_name: pii-removal-service
+    build: .
+    ports:
+      - "127.0.0.1:8000:8000"

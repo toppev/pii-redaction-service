@@ -1,0 +1,5 @@
+fastapi==0.115.6
+uvicorn==0.34.0
+gliner==0.2.13
+# In docker we install torch CPU-only separate. Uncomment if you want CUDA supported one here.
+#torch==2.5.1
