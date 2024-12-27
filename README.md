@@ -1,5 +1,7 @@
 # pii-redaction-service
 
+**Live Demo: [pii-redaction.toppe.dev](https://pii-redaction.toppe.dev)**
+
 🚀 **pii-redaction-service** is your go-to service for removing Personally Identifiable Information (PII) from text. Whether you're prepping data for a
 third-party
 service or storing it in your database, this tool has you covered. 🌟
