@@ -101,7 +101,7 @@ See `training-labels.txt` file for inspiration for labels - it doesn't have to b
 
 ```json
 {
-  "text": "Your super private text with license key 1234-5678-9012-3456",
+  "text": "Toppe's super private text with license key 1234-5678-9012-3456",
   "labels": [
     "user id",
     "username",
@@ -109,36 +109,39 @@ See `training-labels.txt` file for inspiration for labels - it doesn't have to b
   ],
   "thresholds": {
     "default": 0.5,
-    "license key": 0.4
+    "license key": 0.4,
+    "username": 1
   },
   "redactionFormat": "[REDACTED]"
 }
 ```
 
 `threshold` (default 0.5) is a value between 0 and 1. The higher the value, the more confident the model has to be to redact the text.
-You can set a `default` threshold for all labels and a specific threshold for a specific label.
+You can set a `default` threshold for all labels and a specific threshold for a specific label. Set threshold to 1 to prevent redaction of a label.
 
 For example:
 
 ```bash
-curl -X POST "http://localhost:8000/redact" -H "accept: application/json" -H "Content-Type: application/json" -d "{\"text\":\"Your super private text with license key 1234-5678-9012-3456\",\"labels\":[\"user id\",\"username\",\"license key\"],\"thresholds\":{\"default\":0.5,\"license key\":0.4},\"redactionFormat\":\"[REDACTED]\"}"
+curl -X POST "http://localhost:8000/redact" -H "accept: application/json" -H "Content-Type: application/json" -d "{\"text\":\"Toppe's super private text with license key 1234-5678-9012-3456\",\"labels\":[\"user id\",\"username\",\"license key\"],\"thresholds\":{\"default\":0.5,\"license key\":0.4,\"username\":1},\"redactionFormat\":\"[REDACTED]\"}"
 ```
 
 Output:
 
 ```json
 {
-  "redactedText": "Your super private text with license key [REDACTED]",
+  "redactedText": "Toppe's super private text with license key [REDACTED]",
   "entities": [
     {
       "text": "1234-5678-9012-3456",
       "label": "license key",
       "start": 41,
       "end": 60,
-      "score": 0.9540082812309265
+      "score": 0.9226852059364319
     }
   ],
   "labels": [
+    "user id",
+    "username",
     "license key"
   ]
 }
