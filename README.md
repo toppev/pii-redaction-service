@@ -153,3 +153,9 @@ Output:
 
 Note: `threshold` (default 0.5) is a value between 0 and 1. The higher the value, the more confident the model has to be to redact the text.
 `redactionFormat` (default `<REDACTED {label}>`) is the format of the redacted text. `{label}` will be replaced with the uppercase label.
+
+## Known Issues
+
+- The model is not perfect and may not redact all PII. Use responsibly.
+- The model removes text similar to the label that is not PII. E.g., text "phone numbers" may be redacted if label "phone number" is enabled even though there's
+  no phone number.
