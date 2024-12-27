@@ -45,7 +45,7 @@ That’s it! The service will be up and slicing PII at `http://localhost:8000`. 
 
 ## 🚪 Access the Demo UI
 
-Head over to [http://pii-redaction.toppe.dev](http://pii-redaction.toppe.dev). No coding? No problem! 🖱️
+Head over to [https://pii-redaction.toppe.dev](https://pii-redaction.toppe.dev). No coding? No problem! 🖱️
 
 ---
 
