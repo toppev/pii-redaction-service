@@ -155,3 +155,5 @@ Note: `threshold` (default 0.5) is a value between 0 and 1. The higher the value
 - The model is not perfect and may not redact all PII. Use responsibly.
 - The model removes text similar to the label that is not PII. E.g., text "phone numbers" may be redacted if label "phone number" is enabled even though there's
   no phone number.
+- In long texts, the service chunks (a sliding window) the text which may cut entities in half and incorrectly redact it only partially PII
+- Sometimes a part of longer entity will be redacted as something else. E.g., "123 Avenida Central, Madrid, Spain, 28014" may be redacted as "[REDACTED CCV] Avenida Central, Madrid, Spain, 28014"
