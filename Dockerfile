@@ -18,6 +18,10 @@ ENV HF_HOME=/app/.cache/huggingface
 ENV MODEL_PATH=urchade/gliner_multi_pii-v1
 RUN python -c "from gliner import GLiNER; GLiNER.from_pretrained('$MODEL_PATH')"
 
+# Use the mode in our image, this allows it to start even if huggingface is offline
+ENV HF_HUB_OFFLINE=1
+ENV DO_NOT_TRACK=1
+
 COPY . .
 RUN chown -R appuser:appuser /app
 
